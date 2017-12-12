@@ -1,0 +1,37 @@
+﻿  CollisionDetectionSAT.cpp
+d:\gametech\build\ncltech\Subspace.h(25): warning C4244: '=': conversion from 'const float' to 'unsigned int', possible loss of data
+d:\gametech\build\ncltech\Subspace.h(30): warning C4244: 'return': conversion from 'unsigned int' to 'const float', possible loss of data
+  CommonMeshes.cpp
+  CommonUtils.cpp
+d:\gametech\build\ncltech\Subspace.h(25): warning C4244: '=': conversion from 'const float' to 'unsigned int', possible loss of data
+d:\gametech\build\ncltech\Subspace.h(30): warning C4244: 'return': conversion from 'unsigned int' to 'const float', possible loss of data
+  CuboidCollisionShape.cpp
+d:\gametech\build\ncltech\Subspace.h(25): warning C4244: '=': conversion from 'const float' to 'unsigned int', possible loss of data
+d:\gametech\build\ncltech\Subspace.h(30): warning C4244: 'return': conversion from 'unsigned int' to 'const float', possible loss of data
+  GeometryUtils.cpp
+  GraphicsPipeline.cpp
+  Hull.cpp
+  Manifold.cpp
+d:\gametech\build\ncltech\Subspace.h(25): warning C4244: '=': conversion from 'const float' to 'unsigned int', possible loss of data
+d:\gametech\build\ncltech\Subspace.h(30): warning C4244: 'return': conversion from 'unsigned int' to 'const float', possible loss of data
+  NetworkBase.cpp
+  PhysicsEngine.cpp
+d:\gametech\build\ncltech\Subspace.h(25): warning C4244: '=': conversion from 'const float' to 'unsigned int', possible loss of data
+d:\gametech\build\ncltech\Subspace.h(30): warning C4244: 'return': conversion from 'unsigned int' to 'const float', possible loss of data
+  PhysicsNode.cpp
+d:\gametech\build\ncltech\Subspace.h(25): warning C4244: '=': conversion from 'const float' to 'unsigned int', possible loss of data
+d:\gametech\build\ncltech\Subspace.h(30): warning C4244: 'return': conversion from 'unsigned int' to 'const float', possible loss of data
+  SceneManager.cpp
+d:\gametech\build\ncltech\Subspace.h(25): warning C4244: '=': conversion from 'const float' to 'unsigned int', possible loss of data
+d:\gametech\build\ncltech\Subspace.h(30): warning C4244: 'return': conversion from 'unsigned int' to 'const float', possible loss of data
+  ScreenPicker.cpp
+  SphereCollisionShape.cpp
+d:\gametech\build\ncltech\Subspace.h(25): warning C4244: '=': conversion from 'const float' to 'unsigned int', possible loss of data
+d:\gametech\build\ncltech\Subspace.h(30): warning C4244: 'return': conversion from 'unsigned int' to 'const float', possible loss of data
+  Subspace.cpp
+d:\gametech\build\ncltech\Subspace.h(25): warning C4244: '=': conversion from 'const float' to 'unsigned int', possible loss of data
+d:\gametech\build\ncltech\Subspace.h(30): warning C4244: 'return': conversion from 'unsigned int' to 'const float', possible loss of data
+Subspace.cpp(5): warning C4244: '=': conversion from 'const float' to 'unsigned int', possible loss of data
+Subspace.cpp(38): warning C4244: '=': conversion from 'const float' to 'unsigned int', possible loss of data
+Subspace.cpp(41): warning C4244: '=': conversion from 'const unsigned int' to 'float', possible loss of data
+  ncltech.vcxproj -> D:\GameTech\Build\Release\ncltech.lib
