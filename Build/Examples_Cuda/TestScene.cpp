@@ -1,4 +1,4 @@
-#include "BallPoolScene.h"
+#include "TestScene.h"
 
 #include <nclgl\Vector4.h>
 #include <ncltech\GraphicsPipeline.h>
@@ -6,22 +6,24 @@
 #include <ncltech\DistanceConstraint.h>
 #include <ncltech\SceneManager.h>
 #include <ncltech\CommonUtils.h>
+#include <ncltech\CuboidCollisionShape.h>
+#include <ncltech\SphereCollisionShape.h>
 using namespace CommonUtils;
 
-BallPoolScene::BallPoolScene(const std::string& friendly_name)
+TestScene::TestScene(const std::string& friendly_name)
 	: Scene(friendly_name)
 	, m_AccumTime(0.0f)
 	, m_pPlayer(NULL)
 {
 }
 
-BallPoolScene::~BallPoolScene()
+TestScene::~TestScene()
 {
-
+	delete m_Mesh;
+	m_Mesh = nullptr;
 }
 
-
-void BallPoolScene::OnInitializeScene()
+void TestScene::OnInitializeScene()
 {
 	//Disable the physics engine (We will be starting this later!)
 	PhysicsEngine::Instance()->SetPaused(true);
@@ -33,9 +35,76 @@ void BallPoolScene::OnInitializeScene()
 
 	m_AccumTime = 0.0f;
 
-	//<--- SCENE CREATION --->
+	//Example usage of Log 
+	//- The on screen log can be opened from the bottom left though the
+	//  main point of this is the ability to output to file easily from anywhere.
+	//  So if your having trouble debugging with hundreds of 'cout << vector3()' just
+	//  through them into NCLLOG() and look at the 'program_output.txt' later =]
+	NCLDebug::Log("This is a log entry - It will printed to the console, on screen log and <project_dir>\\program_output.txt");
+	//NCLERROR("THIS IS AN ERROR!"); // <- On Debug mode this will also trigger a breakpoint in your code!
+	
+
+
+//<--- SCENE CREATION --->
 	//Create Ground
 	this->AddGameObject(BuildCuboidObject("Ground", Vector3(0.0f, -1.0f, 0.0f), Vector3(20.0f, 1.0f, 20.0f), true, 0.0f, true, false, Vector4(0.2f, 0.5f, 1.0f, 1.0f)));
+
+	//Create Player (See OnUpdateScene)
+	m_pPlayer = BuildCuboidObject(
+		"Player1",					// Optional: Name
+		Vector3(5.f, 0.5f, 0.0f),	// Position
+		Vector3(0.5f, 0.5f, 1.0f),  // Half-Dimensions
+		true,						// Physics Enabled?
+		0.f,						// Physical Mass (must have physics enabled)
+		true,						// Physically Collidable (has collision shape)
+		false,						// Dragable by user?
+		Vector4(0.1f, 0.1f, 0.1f, 1.0f)); // Render color
+	this->AddGameObject(m_pPlayer);
+
+
+	//Create raptor with multiple collision shapes
+	GameObject* player = new GameObject("raptor");
+	Mesh* m_Mesh = new OBJMesh(MESHDIR"raptor.obj");
+	player->SetRender(new RenderNode(m_Mesh));
+	player->Render()->SetBoundingRadius(1.0f);
+	player->Render()->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+	player->Render()->SetTransform(Matrix4::Scale(Vector3(5.0, 5.0, 5.0)));
+
+	player->SetPhysics(new PhysicsNode());
+	player->Physics()->SetPosition(Vector3(0.0f, 0.5f, 0.0f));
+	player->Physics()->SetInverseMass(1.f);
+	player->Physics()->SetInverseInertia(CuboidCollisionShape(Vector3(0.5f, 0.5f, 1.f)).BuildInverseInertia(1.f));
+	player->Physics()->AddCollisionShape(new CuboidCollisionShape(Vector3(0.1f, 0.1f, 0.5f)), Vector3(0, 0.25f, 0.85f));
+	player->Physics()->AddCollisionShape(new CuboidCollisionShape(Vector3(0.2f, 0.38f, 0.3f)), Vector3(0, -0.06f, 0));
+	player->Physics()->AddCollisionShape(new SphereCollisionShape(0.3f), Vector3(0, 0.3f, -0.55f));
+
+	this->AddGameObject(player);
+
+	auto create_cube_tower = [&](const Vector3& offset, float cubewidth)
+	{
+		const Vector3 halfdims = Vector3(cubewidth, cubewidth, cubewidth) * 0.5f;
+		for (int x = 0; x < 2; ++x)
+		{
+			for (int y = 0; y < 6; ++y)
+			{
+				uint idx = x * 5 + y;
+				Vector4 color = CommonUtils::GenColor(idx / 10.f, 0.5f);
+				Vector3 pos = offset + Vector3(x * cubewidth, 1e-3f + y * cubewidth, cubewidth * (idx % 2 == 0) ? 0.5f : -0.5f);
+
+				GameObject* cube = BuildCuboidObject(
+					"",						// Optional: Name
+					pos,					// Position
+					halfdims,				// Half-Dimensions
+					true,					// Physics Enabled?
+					1.f,					// Physical Mass (must have physics enabled)
+					true,					// Physically Collidable (has collision shape)
+					true,					// Dragable by user?
+					color);					// Render color
+				cube->Physics()->SetBadTarget(true);
+				this->AddGameObject(cube);
+			}
+		}
+	};
 
 	auto create_ball_cube = [&](const Vector3& offset, const Vector3& scale, float ballsize)
 	{
@@ -58,36 +127,45 @@ void BallPoolScene::OnInitializeScene()
 						true,				// Physically Collidable (has collision shape)
 						false,				// Dragable by user?
 						col);// Render color
+					sphere->Physics()->SetGoodTarget(true);
 					this->AddGameObject(sphere);
 				}
 			}
 		}
 	};
 
+	//Create Cube Towers
+	create_cube_tower(Vector3(3.0f, 0.5f, 3.0f), 1.0f);
+	create_cube_tower(Vector3(-3.0f, 0.5f, -3.0f), 1.0f);
+
 	//Create Test Ball Cubey things
 	create_ball_cube(Vector3(-8.0f, 0.5f, 12.0f), Vector3(0.5f, 0.5f, 0.5f), 0.1f);
+	create_ball_cube(Vector3(8.0f, 0.5f, 12.0f), Vector3(0.3f, 0.3f, 0.3f), 0.1f);
+	create_ball_cube(Vector3(-8.0f, 0.5f, -12.0f), Vector3(0.2f, 0.2f, 0.2f), 0.1f);
+	create_ball_cube(Vector3(8.0f, 0.5f, -12.0f), Vector3(0.5f, 0.5f, 0.5f), 0.1f);
 }
 
-void BallPoolScene::OnCleanupScene()
+void TestScene::OnCleanupScene()
 {
 	//Just delete all created game objects 
 	//  - this is the default command on any Scene instance so we don't really need to override this function here.
-	Scene::OnCleanupScene();
+	Scene::OnCleanupScene(); 
 }
 
-void BallPoolScene::OnUpdateScene(float dt)
+void TestScene::OnUpdateScene(float dt)
 {
 	m_AccumTime += dt;
 
 	// You can add status entries to the top left from anywhere in the program
 	NCLDebug::AddStatusEntry(Vector4(1.0f, 0.2f, 0.2f, 1.0f), "Welcome to the Game Tech Framework!");
 	NCLDebug::AddStatusEntry(Vector4(1.0f, 0.4f, 0.4f, 1.0f), "   You can move the black car with the arrow keys");
-
+	
 	// You can print text using 'printf' formatting
 	bool donkeys = false;
 	NCLDebug::AddStatusEntry(Vector4(1.0f, 0.4f, 0.4f, 1.0f), "   The %s in this scene are dragable", donkeys ? "donkeys" : "cubes");
 	NCLDebug::AddStatusEntry(Vector4(1.0f, 0.4f, 0.4f, 1.0f), "   - Left click to move");
 	NCLDebug::AddStatusEntry(Vector4(1.0f, 0.4f, 0.4f, 1.0f), "   - Right click to rotate (They will be more spinnable after tutorial 2)");
+	
 
 	//Or move our car around the scene..
 	{
@@ -134,7 +212,7 @@ void BallPoolScene::OnUpdateScene(float dt)
 		{
 			//Draw the rocket booster on the car using NCLDebug
 			Vector3 backward_dir = pobj->GetOrientation().ToMatrix3() * Vector3(0, 0, 1);
-			NCLDebug::DrawPoint(pobj->GetPosition() + backward_dir, 0.3f, Vector4(1.f, 0.7f, 0.0f, 1.0f));
+			NCLDebug::DrawPoint(pobj->GetPosition() + backward_dir, 0.3f, Vector4(1.f, 0.7f, 0.0f, 1.0f)); 
 			NCLDebug::DrawPoint(pobj->GetPosition() + backward_dir * 1.333f, 0.26f, Vector4(0.9f, 0.5f, 0.0f, 1.0f));
 			NCLDebug::DrawPoint(pobj->GetPosition() + backward_dir * 1.666f, 0.23f, Vector4(0.8f, 0.3f, 0.0f, 1.0f));
 			NCLDebug::DrawPoint(pobj->GetPosition() + backward_dir * 2.f, 0.2f, Vector4(0.7f, 0.2f, 0.0f, 1.0f));

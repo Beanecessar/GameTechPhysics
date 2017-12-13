@@ -92,7 +92,7 @@ void CuboidCollisionShape::GetMinMaxVertexOnAxis(
 	Vector3& out_max) const
 {
 	// Build World Transform
-	Matrix4 wsTransform = Parent()->GetWorldSpaceTransform() * Matrix4::Scale(halfDims);
+	Matrix4 wsTransform = Parent()->GetWorldSpaceTransform()*Matrix4::Translation(offset) * Matrix4::Scale(halfDims);
 
 	// Convert world space axis into model space (Axis Aligned Cuboid)
 	Matrix3 invNormalMatrix = Matrix3::Inverse(Matrix3(wsTransform));

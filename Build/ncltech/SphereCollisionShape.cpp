@@ -65,8 +65,8 @@ void SphereCollisionShape::GetMinMaxVertexOnAxis(
 	Vector3& out_min,
 	Vector3& out_max) const
 {
-	out_min = Parent()->GetPosition() - axis * m_Radius;
-	out_max = Parent()->GetPosition() + axis * m_Radius;
+	out_min = Parent()->GetWorldSpaceTransform()*offset - axis * m_Radius;
+	out_max = Parent()->GetWorldSpaceTransform()*offset + axis * m_Radius;
 }
 //-------------
 
