@@ -47,12 +47,12 @@ void SceneManager::LaunchSphere(float speed, float ballsize) {
 
 	dir.y = sin((float)DegToRad(pitch));
 	dir.z = -cos((float)DegToRad(pitch));
-
+	
 	dir.x = dir.z*sin((float)DegToRad(yaw));
 	dir.z = dir.z*cos((float)DegToRad(yaw));
 	
 	GameObject* sphere = CommonUtils::BuildSphereObject(
-		"",					// Optional: Name
+		"Bullet",					// Optional: Name
 		pos,				// Position
 		ballsize,			// Half-Dimensions
 		true,				// Physics Enabled?

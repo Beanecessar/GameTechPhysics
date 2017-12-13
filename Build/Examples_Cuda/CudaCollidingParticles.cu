@@ -172,7 +172,7 @@ void CollideParticleWithCell(float baumgarte_factor, uint particle_idx, Particle
 }
 
 __global__
-void CollideParticles(float baumgarte_factor, uint num_particles, Particle* particles, Particle* out_particles, uint* grid_cell_start, uint* grid_cell_end)
+void CollideParticles(float baumgarte_factor, uint num_particles, Particle* particles, Particle* out_particles, Particle* bullets, uint* grid_cell_start, uint* grid_cell_end, uint* num_bullets)
 {
 	uint index = blockIdx.x*blockDim.x + threadIdx.x;
 	if (index >= num_particles)
@@ -195,6 +195,53 @@ void CollideParticles(float baumgarte_factor, uint num_particles, Particle* part
 				CollideParticleWithCell(baumgarte_factor, index, p, out_p, check_cell_idx, particles, grid_cell_start, grid_cell_end);
 
 			}
+		}
+	}
+
+	//Do a quick sphere-sphere test
+	if (num_bullets > 0) {
+		float3 ab = bullets[0]._pos - out_p._pos;
+
+		//printf("%f,%f,%f | %f,%f,%f \n",bullets[0]._pos.x, bullets[0]._pos.y, bullets[0]._pos.z, out_p._pos.x, out_p._pos.y, out_p._pos.z);
+
+		float lengthSq = dot(ab, ab);
+
+		//printf("%f\n", lengthSq);
+
+		const float diameterSq = (PARTICLE_RADIUS * 5.f) * (PARTICLE_RADIUS * 5.f);
+
+		if (lengthSq < diameterSq)
+		{
+			//printf("Collision!\n");
+
+			//We have a collision!
+			float len = sqrtf(lengthSq);
+			float3 abn = ab / len;
+
+			//Direct normal collision (no friction/shear)
+			float abnVel = dot(bullets[0]._vel - out_p._vel, abn);
+			float jn = -(abnVel * (1.f + COLLISION_ELASTICITY));
+
+			//Extra energy to overcome overlap error
+			float overlap = PARTICLE_RADIUS * 2.f - len;
+			float b = overlap * baumgarte_factor;
+			//float b = overlap * 2.0f;
+
+			//Normally we just add correctional energy (b) to our velocity,
+			// but with such small particles and so many collisions this quickly gets 
+			// out of control! The other way to solve positional errors is to move
+			// the positions of the spheres, though this has numerous other problems and 
+			// is ruins our collision neighbour checks. Though in general, velocity correction
+			// adds energy and positional correction removes energy (and is unstable with the 
+			// way we check collisions) so for now, we'll just use a half of each. Try messing
+			// around with these values though! :)
+			jn += b;
+			//out_particle._pos -= abn * overlap * 0.5f; //Half positional correction, half because were only applying to A and not A + B
+
+
+			jn = max(jn, 0.0f);
+			//We just assume each particle is the same mass, so half the velocity change is applied to each.
+			out_p._vel -= abn * (jn * 0.5f);
 		}
 	}
 
@@ -486,7 +533,7 @@ void CudaCollidingParticles::UpdateParticles(float dt)
 
 	for (int i = 0; i < 10; ++i)
 	{
-		CollideParticles<<< grid, block >>>(baumgarte_factor, num_particles, particles_ping, particles_pong, grid_cell_start, grid_cell_end);
+		CollideParticles<<< grid, block >>>(baumgarte_factor, num_particles, particles_ping, particles_pong, bullet, grid_cell_start, grid_cell_end, num_bullets);
 		std::swap(particles_ping, particles_pong);
 		
 		//Should really do boundary check's here...
@@ -512,4 +559,19 @@ void CudaCollidingParticles::UpdateParticles(float dt)
 		CopyToOpenGL());
 
 	gpuErrchk(cudaGraphicsUnmapResources(1, &cGLOutPositions, 0));
+}
+
+void CudaCollidingParticles::AddParticle(Particle* p) {
+	const float world_dim = PARTICLE_GRID_SIZE * PARTICLE_GRID_CELL_SIZE;
+	const float3 world_offset = make_float3(world_dim * 0.5f, 0.0f, world_dim * 0.5f);
+
+	p->_pos = p->_pos + world_offset;
+
+	uint num_of_bullets = 1;
+
+	gpuErrchk(cudaMalloc(&num_bullets, sizeof(uint)));
+	gpuErrchk(cudaMemcpy(num_bullets, &num_of_bullets, sizeof(uint), cudaMemcpyHostToDevice));
+
+	gpuErrchk(cudaMalloc(&bullet, sizeof(Particle)));
+	gpuErrchk(cudaMemcpy(bullet, p, sizeof(Particle), cudaMemcpyHostToDevice));
 }

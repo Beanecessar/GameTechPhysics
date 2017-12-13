@@ -89,6 +89,10 @@ public:
 
 
 	//Getters / Setters 
+	inline auto GetPhysicsNodesBegin()			{ return physicsNodes.begin(); }
+	inline auto GetPhysicsNodesEnd()			{ return physicsNodes.end(); }
+	inline size_t GetPhysicsNodesSize()			{ return physicsNodes.size(); }
+
 	inline bool IsPaused() const				{ return isPaused; }
 	inline void SetPaused(bool paused)			{ isPaused = paused; }
 

@@ -45,6 +45,8 @@ public:
 
 	void UpdateParticles(float dt);
 
+	void AddParticle(Particle* p);
+
 protected:
 	uint num_particles;
 
@@ -67,4 +69,7 @@ protected:
 
 	//Our reference to the opengl vertex buffer
 	cudaGraphicsResource* cGLOutPositions;
+
+	Particle* bullet;
+	uint* num_bullets;
 };

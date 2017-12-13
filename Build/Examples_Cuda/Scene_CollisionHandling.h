@@ -21,7 +21,7 @@ public:
 
 	virtual ~Scene_CollisionHandling()
 	{
-
+		
 	}
 
 
@@ -51,19 +51,39 @@ public:
 		// vertex buffer that holds each particles world position.
 		this->AddGameObject(new GameObject("", rnode, NULL));
 
-
-
 		cudaParticleProg->InitializeOpenGLVertexBuffer(rnode->GetGLVertexBuffer());
+
+		physcisNodesSize = PhysicsEngine::Instance()->GetPhysicsNodesSize();
 	}
 
 	virtual void OnCleanupScene() override
 	{
 		Scene::OnCleanupScene();
+		bullet = nullptr;
 		delete cudaParticleProg;
 	}
 
 	virtual void OnUpdateScene(float dt) override
 	{
+		if (PhysicsEngine::Instance()->GetPhysicsNodesSize() != physcisNodesSize) {
+			for (auto i=PhysicsEngine::Instance()->GetPhysicsNodesBegin();i!= PhysicsEngine::Instance()->GetPhysicsNodesEnd();++i)
+			{
+				if ((*i)->GetParent()->GetName() == "Bullet")
+				{
+					bullet = (*i);
+				}
+			}
+			physcisNodesSize = PhysicsEngine::Instance()->GetPhysicsNodesSize();
+		}
+		else if(bullet)
+		{
+			float3 v = { bullet->GetLinearVelocity().x, bullet->GetLinearVelocity().y, bullet->GetLinearVelocity().z };
+			float3 p = { bullet->GetPosition().x, bullet->GetPosition().y, bullet->GetPosition().z };
+
+			Particle particle = { v,0,p,0 };
+			cudaParticleProg->AddParticle(&particle);
+		}
+
 		NCLDebug::AddStatusEntry(Vector4(1.0f, 0.9f, 0.8f, 1.0f), "--- Info ---");
 		NCLDebug::AddStatusEntry(Vector4(1.0f, 0.9f, 0.8f, 1.0f), "  Example broadphase using cuda thrust library. The thrust library");
 		NCLDebug::AddStatusEntry(Vector4(1.0f, 0.9f, 0.8f, 1.0f), "  is the GPU equivalent of the C++ STL and makes things easier ");
@@ -77,4 +97,6 @@ public:
 
 protected:
 	CudaCollidingParticles* cudaParticleProg;
+	PhysicsNode* bullet;
+	size_t physcisNodesSize;
 };
