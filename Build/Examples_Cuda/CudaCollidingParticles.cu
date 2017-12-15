@@ -208,7 +208,7 @@ void CollideParticles(float baumgarte_factor, uint num_particles, Particle* part
 
 		//printf("%f\n", lengthSq);
 
-		const float diameterSq = (PARTICLE_RADIUS * 5.f) * (PARTICLE_RADIUS * 5.f);
+		const float diameterSq = (PARTICLE_RADIUS * PARTICLE_RADIUS * 100.f);
 
 		if (lengthSq < diameterSq)
 		{
